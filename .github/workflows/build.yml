@@ -23,7 +23,7 @@ jobs:
             #     node-version: '20.18.1'
             # - run: npm ci
             - uses: oven-sh/setup-bun@v2
-            - run: cd screenpipe-tauri-template && bun install --frozen-lockfile
+            - run: bun install --frozen-lockfile
               shell: bash
             # Install system dependencies for Screenpipe and Tauri
             # - if: matrix.os == 'ubuntu-latest'
