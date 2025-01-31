@@ -1,11 +1,10 @@
-name: Release version
+name: Release app
 
 on: 
   push:
-    # tags:
-    # - 'v*'
-    branches:
-      - main
+    tags:
+    - 'v*'
+
 jobs:
   build:
     uses: ./.github/workflows/build-matrix.yml
@@ -17,4 +16,3 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: ${{ needs.build.outputs.deb-url }}, ${{ needs.build.outputs.app-image-url }}
-          tag: 'v0.1.0'
