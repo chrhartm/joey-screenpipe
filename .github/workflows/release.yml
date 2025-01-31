@@ -1,0 +1,19 @@
+name: Release version
+
+on: 
+  push:
+    # tags:
+    # - 'v*'
+    branches:
+      - main
+jobs:
+  build:
+    uses: ./.github/workflows/build-matrix.yml
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: ${{ needs.build.outputs.deb-url }}, ${{ needs.build.outputs.app-image-url }}
