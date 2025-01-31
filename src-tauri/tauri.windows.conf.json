@@ -1,0 +1,16 @@
+{
+	"bundle": {
+		"externalBin": ["bin/screenpipe", "bin/bun", "bin/ollama"],
+		"targets": ["nsis"],
+		"resources": {
+			"bin\\ffmpeg\\bin\\ffmpeg.exe": "./",
+			"bin\\ffmpeg\\bin\\ffprobe.exe": "./",
+			"bin\\ffmpeg\\bin\\*.dll": "./",
+			"bin\\ffmpeg\\lib\\*": "./",
+			"lib\\onnxruntime*\\lib\\onnxruntime.dll": "./",
+			"lib\\onnxruntime*\\lib\\onnxruntime_providers_cuda.dll": "./",
+			"lib\\onnxruntime*\\lib\\onnxruntime_providers_shared.dll": "./",
+			"lib\\ollama\\*": "./"
+		}
+	}
+}
