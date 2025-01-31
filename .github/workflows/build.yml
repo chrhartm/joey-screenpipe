@@ -10,7 +10,7 @@ on:
         #     build: ${{ github.event.inputs.build }}
 jobs:
     install_dependencies:
-        runs-on: ${{ github.event.inputs.os }}
+        runs-on: ${{ inputs.os }}
         steps:
             # Install Rust (rustc, cargo, etc)
             - uses: actions-rust-lang/setup-rust-toolchain@v1
