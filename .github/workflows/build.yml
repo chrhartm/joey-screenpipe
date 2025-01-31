@@ -1,15 +1,17 @@
-# If you're seeing "Context access might be invalid" warnings, as of writing this,
-# it's not fixable and you can just ignore them.
-# See https://github.com/github/vscode-github-actions/issues/222
 name: Build app
 
 on:
     workflow_call:
+        inputs:
+          os:
+            description: 'Operating system'
+            required: true
+            type: string
         # outputs:
         #     build: ${{ github.event.inputs.build }}
 jobs:
     install_dependencies:
-        runs-on: ${{ matrix.os }}
+        runs-on: ${{ github.event.inputs.os }}
         steps:
             # Install Rust (rustc, cargo, etc)
             - uses: actions-rust-lang/setup-rust-toolchain@v1
