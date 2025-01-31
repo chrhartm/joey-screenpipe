@@ -15,3 +15,4 @@ jobs:
         uses: ./.github/workflows/build.yml
         with:
             os: ${{ matrix.os }}
+        secrets: inherit
