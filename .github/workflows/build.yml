@@ -6,42 +6,44 @@ on:
           os:
             required: true
             type: string
-        # outputs:
-        #     build: ${{ github.event.inputs.build }}
+        outputs:
+          deb-url:
+            value: ${{ jobs.install_dependencies.outputs.deb-url }}
+          app-image-url:
+            value: ${{ jobs.install_dependencies.outputs.app-image-url }}
 jobs:
     install_dependencies:
+        outputs:
+          deb-url: ${{ steps.deb.outputs.artifact-url }}
+          app-image-url: ${{ steps.app-image.outputs.artifact-url }}
         runs-on: ${{ inputs.os }}
         steps:
             # Install system dependencies for Screenpipe and Tauri
             - if: inputs.os == 'ubuntu-latest'
             # Multiline doesn't seem to be working (even with \)
               run: DEBIAN_FRONTEND=noninteractive sudo apt-get -y update && sudo apt-get -y install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev g++ ffmpeg tesseract-ocr cmake pkg-config libavformat-dev libavfilter-dev libavdevice-dev libavcodec-dev libavutil-dev libswscale-dev libssl-dev libtesseract-dev libxdo-dev libsdl2-dev libclang-dev libxtst-dev libasound2-dev libdbus-1-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxi-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev clang llvm-dev llvm
-              shell: bash
 
             # Install Rust (rustc, cargo, etc)
             - uses: actions-rust-lang/setup-rust-toolchain@v1
               with:
                   toolchain: stable
     
+            # Checkout, install Bun, and install package.json dependencies
             - uses: actions/checkout@v4
-            # Install Node.js, npm, and package.json dependencies
-            # - uses: actions/setup-node@v4
-            #   with:
-            #     node-version: '20.18.1'
-            # - run: npm ci
             - uses: oven-sh/setup-bun@v2
             - run: bun install --frozen-lockfile
-              shell: bash
-            # Build and upload the Tauri app to the artifacts
-            - run: bun tauri build --verbose && pwd
-              shell: bash
-            # - uses: actions/upload-artifact@v4
-            #   with:
-            #     name: bundles-${{ matrix.os}}
-            #     path: |
-            #       src-tauri/target/tauri/release/screenpipe-tauri-template
-            #       src-tauri/target/tauri/release/bundle/deb/screenpipe-tauri-template_0.1.0_amd64.deb
-            #       src-tauri/target/tauri/release/bundle/rpm/screenpipe-tauri-template-0.1.0-x86_64.AppImage
-    # checkout:
-    #   runs-on: ${{ matrix.os }}
-    #   steps:
+
+            # Build and upload Tauri app to the artifacts
+            - run: bun tauri build --verbose
+            - if: inputs.os == 'ubuntu-latest'
+              id: deb
+              uses: actions/upload-artifact@v4
+              with:
+                name: ${{ inputs.os }}-deb
+                path: ./src-tauri/target/tauri/release/bundle/deb/*.deb
+            - if: inputs.os == 'ubuntu-latest'
+              id: app-image
+              uses: actions/upload-artifact@v4
+              with:
+                name: ${{ inputs.os }}-app-image
+                path: ./src-tauri/target/tauri/release/bundle/appimage/*.AppImage
