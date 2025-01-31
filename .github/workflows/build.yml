@@ -7,15 +7,15 @@ on:
           required: true
           type: string
       outputs:
-        deb-url:
-          value: ${{ jobs.install_dependencies.outputs.deb-url }}
-        app-image-url:
-          value: ${{ jobs.install_dependencies.outputs.app-image-url }}
+        deb-name:
+          value: ${{ jobs.install_dependencies.outputs.deb-name }}
+        app-image-name:
+          value: ${{ jobs.install_dependencies.outputs.app-image-name }}
 jobs:
   install_dependencies:
       outputs:
-        deb-url: ${{ steps.deb.outputs.artifact-url }}
-        app-image-url: ${{ steps.app-image.outputs.artifact-url }}
+        deb-name: ${{ steps.deb.outputs.artifact-name }}
+        app-image-name: ${{ steps.app-image.outputs.artifact-name }}
       runs-on: ${{ inputs.os }}
       steps:
           # Install system dependencies for Screenpipe and Tauri

@@ -25,4 +25,6 @@ dist-ssr
 bin
 lib
 
+.github/artifacts
+
 node_modules

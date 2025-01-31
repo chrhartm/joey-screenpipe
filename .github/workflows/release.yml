@@ -3,7 +3,7 @@ name: Release app
 on: 
   push:
     tags:
-    - 'v*'
+    - 'v*.*.*'
 
 jobs:
   build:
@@ -13,6 +13,11 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v4
-      - uses: ncipollo/release-action@v1
+      - uses: actions/download-artifact@v4
         with:
-          artifacts: ${{ needs.build.outputs.deb-url }}, ${{ needs.build.outputs.app-image-url }}
+          path: ./.github/artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: ./.github/artifacts/**/*
+
+          # ${{ needs.build.outputs.deb-name }}, ${{ needs.build.outputs.app-image-name }}
