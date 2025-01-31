@@ -17,3 +17,4 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: ${{ needs.build.outputs.deb-url }}, ${{ needs.build.outputs.app-image-url }}
+          tag: 'v0.1.0'
