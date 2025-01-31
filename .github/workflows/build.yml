@@ -4,7 +4,6 @@ on:
     workflow_call:
         inputs:
           os:
-            description: 'Operating system'
             required: true
             type: string
         # outputs:
