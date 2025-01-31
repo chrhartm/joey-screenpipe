@@ -12,10 +12,17 @@ jobs:
     install_dependencies:
         runs-on: ${{ inputs.os }}
         steps:
+            # Install system dependencies for Screenpipe and Tauri
+            - if: inputs.os == 'ubuntu-latest'
+            # Multiline doesn't seem to be working (even with \)
+              run: DEBIAN_FRONTEND=noninteractive sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev g++ ffmpeg tesseract-ocr cmake pkg-config libavformat-dev libavfilter-dev libavdevice-dev libavcodec-dev libavutil-dev libswscale-dev libssl-dev libtesseract-dev libxdo-dev libsdl2-dev libclang-dev libxtst-dev libasound2-dev libdbus-1-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libx11-dev libxi-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev clang llvm-dev llvm
+              shell: bash
+
             # Install Rust (rustc, cargo, etc)
             - uses: actions-rust-lang/setup-rust-toolchain@v1
               with:
                   toolchain: stable
+    
             - uses: actions/checkout@v4
             # Install Node.js, npm, and package.json dependencies
             # - uses: actions/setup-node@v4
@@ -24,16 +31,6 @@ jobs:
             # - run: npm ci
             - uses: oven-sh/setup-bun@v2
             - run: bun install --frozen-lockfile
-              shell: bash
-            # Install system dependencies for Screenpipe and Tauri
-            # - if: matrix.os == 'ubuntu-latest'
-            - run: |
-                  DEBIAN_FRONTEND=noninteractive sudo apt-get install -y libwebkit2gtk-4.1-dev
-                  build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev
-                  librsvg2-dev g++ ffmpeg tesseract-ocr cmake pkg-config libavformat-dev libavfilter-dev libavdevice-dev
-                  libavcodec-dev libavutil-dev libswscale-dev libssl-dev libtesseract-dev libxdo-dev libsdl2-dev libclang-dev
-                  libxtst-dev libasound2-dev libdbus-1-dev libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
-                  libx11-dev libxi-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev clang llvm-dev llvm
               shell: bash
             # Build and upload the Tauri app to the artifacts
             - run: bun tauri build && ls src-tauri/target/tauri/release/bundle/appimage
