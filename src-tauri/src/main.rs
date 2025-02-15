@@ -1,13 +1,18 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use tauri_plugin_shell::{ShellExt, process::CommandChild};
+
 use tauri::{
+    RunEvent,
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
 };
 
+struct ChildCommands(Option<CommandChild>);
+
 fn main() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .setup(|app| {
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit_i])?;
@@ -25,8 +30,11 @@ fn main() {
                 })
                 .build(app)?;
             Ok(())
-        })
-        .run(move |app_handle, event| match event {
+        }).unwrap();
+
+        let mut child_commands = ChildCommands(None);
+
+        app.run(move |app_handle, event| match event {
             RunEvent::Ready => {
                 // Start screenpipe server
                 let (_, screenpipe_child) = app_handle.
