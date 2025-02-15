@@ -2,6 +2,7 @@ use tauri_plugin_shell::{ShellExt, process::CommandChild};
 use tauri::{
     menu::{Menu, MenuItem}, tray::TrayIconBuilder, Manager, RunEvent
 };
+use tauri_plugin_positioner::{Position, WindowExt};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -28,14 +29,19 @@ pub fn run() {
                 .expect("failed to get default icon")
                 .clone();
 
+            app.handle().plugin(tauri_plugin_positioner::init());
             let tray = TrayIconBuilder::new()
                 .icon(icon)
                 .menu(&menu)
+                .on_tray_icon_event(|tray_handle, event| {
+                    tauri_plugin_positioner::on_tray_event(tray_handle.app_handle(), &event);
+                  })
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open" => {
                         println!("open menu item was clicked");
                         let window =app.get_webview_window("main").unwrap();
+                        let _ = window.move_window(Position::TrayCenter);
                         if window.is_visible().unwrap() {
                             window.hide().unwrap();
                         } else {
