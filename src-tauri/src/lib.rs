@@ -34,11 +34,15 @@ pub fn run() {
                 .icon(icon)
                 .menu(&menu)
                 .on_tray_icon_event(|tray_handle, event| match event {
-                    tauri::tray::TrayIconEvent::Click { id, position, rect, button, button_state } => {
+                    tauri::tray::TrayIconEvent::Click { .. } => {
                         let window = tray_handle.app_handle().get_webview_window("main").unwrap();
-                        let _ = window.move_window(Position::TrayCenter);
-                        window.show().unwrap();
-                        window.set_focus().unwrap();
+                        if window.is_visible().unwrap() {
+                            window.hide().unwrap();
+                        } else {
+                            let _ = window.move_window(Position::TrayCenter);
+                            window.show().unwrap();
+                            window.set_focus().unwrap();
+                        }
                     }
                     _ => {
                         tauri_plugin_positioner::on_tray_event(tray_handle.app_handle(), &event)
