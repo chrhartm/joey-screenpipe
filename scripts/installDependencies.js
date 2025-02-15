@@ -12,6 +12,8 @@ import {
 	renameSync,
 	rmSync,
 	createWriteStream,
+	unlinkSync,
+	writeFileSync,
 } from "fs";
 import os from "os";
 import path from "path";
@@ -178,44 +180,64 @@ if (platform == "windows") {
 }
 
 if (platform == "macos") {
-	if (!existsSync(config.ffmpegRealname)) {
+	// Define the destination ffmpeg path inside the bin directory.
+	const ffmpegDestPath = path.join(binDir, config.ffmpegRealname);
+
+	// Check if ffmpeg hasn't already been installed in binDir.
+	if (!existsSync(ffmpegDestPath)) {
+		// Download the tar.xz archive of ffmpeg.
 		await download(
 			config.macos.ffmpegUrl,
 			path.join(binDir, `${config.macos.ffmpegName}.tar.xz`)
 		);
-		await $`tar xf ${path.join(binDir, config.macos.ffmpegName)}.tar.xz`;
-		await $`mv ${config.macos.ffmpegName} ${path.join(
-			binDir,
-			config.ffmpegRealname
-		)}`;
-		await $`rm ${path.join(binDir, config.macos.ffmpegName)}.tar.xz`;
+		
+		// Extract the archive directly into binDir.
+		await $`tar -C ${binDir} xf ${path.join(binDir, `${config.macos.ffmpegName}.tar.xz`)}`;
+
+		// In case a previous ffmpeg destination exists, remove it.
+		if (existsSync(ffmpegDestPath)) {
+			console.log("Removing existing ffmpeg folder at:", ffmpegDestPath);
+			rmSync(ffmpegDestPath, { recursive: true, force: true });
+		}
+
+		// Rename (move) the extracted folder from its default name to the target ffmpeg directory.
+		await $`mv ${path.join(binDir, config.macos.ffmpegName)} ${ffmpegDestPath}`;
+		
+		// Clean up the downloaded archive.
+		await $`rm ${path.join(binDir, `${config.macos.ffmpegName}.tar.xz`)}`;
 	} else {
-		console.log("FFMPEG already exists");
+		console.log("FFMPEG already exists at", ffmpegDestPath);
 	}
 
 	console.log("Moved and renamed ffmpeg binary for externalBin");
 
 	console.log("Setting up Swift UI monitoring...");
 	try {
-		const swiftSrc = mkdirSync(
-			path.join(binDir, "..", "temp", "ui_monitoring_macos.swift")
-		);
+		// Define the full file path for the swift source file.
+		const swiftFilePath = path.join(binDir, "..", "temp", "ui_monitoring_macos.swift");
+
+		// Ensure the directory exists (i.e. the parent folder for the swift file).
+		mkdirSync(path.dirname(swiftFilePath), { recursive: true });
+
+		// Remove the Swift file if it already exists to avoid an "EEXIST" error.
+		if (existsSync(swiftFilePath)) {
+			console.log(`Deleting existing Swift file at ${swiftFilePath}`);
+			unlinkSync(swiftFilePath);
+		}
+
+		// Download the Swift file into swiftFilePath.
 		await download(
 			`https://raw.githubusercontent.com/mediar-ai/screenpipe/refs/tags/v${process.env.SCREENPIPE_VERSION}/screenpipe-vision/src/ui_monitoring_macos.swift`,
-			swiftSrc
+			swiftFilePath
 		);
 
 		const architectures = ["arm64", "x86_64"];
-
 		for (const arch of architectures) {
 			console.log(`Compiling Swift UI monitor for ${arch}...`);
-
-			const binaryName = `ui_monitor-${
-				arch === "arm64" ? "aarch64" : "x86_64"
-			}-apple-darwin`;
+			const binaryName = `ui_monitor-${arch === "arm64" ? "aarch64" : "x86_64"}-apple-darwin`;
 			const outputPath = path.join(binDir, binaryName);
 
-			await $`swiftc -O -whole-module-optimization -enforce-exclusivity=unchecked -num-threads 8 -target ${arch}-apple-macos11.0 -o ${outputPath} ${swiftSrc} -framework Cocoa -framework ApplicationServices -framework Foundation`;
+			await $`swiftc -O -whole-module-optimization -enforce-exclusivity=unchecked -num-threads 8 -target ${arch}-apple-macos11.0 -o ${outputPath} ${swiftFilePath} -framework Cocoa -framework ApplicationServices -framework Foundation`;
 
 			console.log(`Swift UI monitor for ${arch} compiled successfully`);
 			await fs.chmod(outputPath, 0o755);
@@ -382,10 +404,7 @@ async function copyBunBinary() {
 		}
 
 		if (bunPathFromSystem) {
-			console.log(
-				"found bun using system command at:",
-				bunPathFromSystem
-			);
+			console.log("found bun using system command at:", bunPathFromSystem);
 		}
 
 		const possibleBunPaths = [
@@ -425,11 +444,31 @@ async function copyBunBinary() {
 		console.log("copying bun from:", bunSrc);
 		console.log("copying bun to:", bunDest1);
 	} else if (platform === "macos") {
-		bunSrc = path.join(os.homedir(), ".bun", "bin", "bun");
+		// Try to locate bun using `which bun`.
+		let bunFromSystem = "";
+		try {
+			bunFromSystem = (await $`which bun`.text()).trim();
+			if (bunFromSystem) {
+				console.log("Found bun via `which bun` at:", bunFromSystem);
+			}
+		} catch (err) {
+			console.warn("Error running which bun:", err);
+		}
+		// Fallback to the default location if not found
+		bunSrc = bunFromSystem || path.join(os.homedir(), ".bun", "bin", "bun");
 		bunDest1 = path.join(binDir, "bun-aarch64-apple-darwin");
 		bunDest2 = path.join(binDir, "bun-x86_64-apple-darwin");
 	} else if (platform === "linux") {
-		bunSrc = path.join(os.homedir(), ".bun", "bin", "bun");
+		let bunFromSystem = "";
+		try {
+			bunFromSystem = (await $`which bun`.text()).trim();
+			if (bunFromSystem) {
+				console.log("Found bun via `which bun` at:", bunFromSystem);
+			}
+		} catch (err) {
+			console.warn("Error running which bun:", err);
+		}
+		bunSrc = bunFromSystem || path.join(os.homedir(), ".bun", "bin", "bun");
 		bunDest1 = path.join(binDir, "bun-x86_64-unknown-linux-gnu");
 	}
 
@@ -463,3 +502,29 @@ async function copyFile(src, dest) {
 
 await copyBunBinary();
 await installOllamaSidecar().catch(console.error);
+
+/**
+ * Ensures that the directory for a given file path exists,
+ * then writes the content to that file.
+ *
+ * @param {string} filePath - The full file path where the content should be written.
+ * @param {string} content - The content to write to the file.
+ */
+function writeSwiftFile(filePath, content) {
+	// Get the parent directory of the file
+	const dir = path.dirname(filePath);
+
+	// Check if the directory exists; if not, create it recursively.
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+	}
+
+	// Write the file content
+	writeFileSync(filePath, content, "utf8");
+}
+
+// Example usage:
+const swiftFilePath = "/Users/christoph/repos/joey-screenpipe/src-tauri/temp/ui_monitoring_macos.swift";
+const swiftContent = "// Swift code goes here";
+
+writeSwiftFile(swiftFilePath, swiftContent);

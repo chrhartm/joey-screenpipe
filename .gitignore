@@ -7,6 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Tauri build artifacts (Rust build output)
+src-tauri/ffmpeg*
+src-tauri/temp/
+
 node_modules
 dist
 dist-ssr
