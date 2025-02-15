@@ -26,6 +26,27 @@ fn main() {
                 .build(app)?;
             Ok(())
         })
-        .run(tauri::generate_context!())
+        .run(move |app_handle, event| match event {
+            RunEvent::Ready => {
+                // Start screenpipe server
+                let (_, screenpipe_child) = app_handle.
+                shell()
+                .sidecar("screenpipe")
+                .unwrap()
+                .spawn()
+                .expect("Failed to start screenpipe");
+    
+                child_commands.0 = Some(screenpipe_child);
+            }
+            RunEvent::ExitRequested { code: _, api: _, .. } => {
+                // Kill screenpipe server.
+                // Tauri is supposed to do this with sidecars but with Screenpipe
+                // it doesn't seem to be working
+                if let Some(child) = child_commands.0.take() {
+                    child.kill().expect("Failed to close subprocesses");
+                }
+            }
+            _ => {}
+        })
         .expect("error while running tauri application");
 }
