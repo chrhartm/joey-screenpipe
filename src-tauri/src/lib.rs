@@ -65,6 +65,16 @@ pub fn run() {
                 .build(app)?;
 
             Ok(())
+        })
+        .on_window_event(|_app_handle, event| match event {
+            tauri::WindowEvent::Focused(is_focused) => {
+                // detect click outside of the focused window and hide the app
+                if !is_focused {
+                    let window = _app_handle.get_webview_window("main").unwrap();
+                    window.hide().unwrap();
+                }
+            }
+            _ => {}
         });
     let app = builder
         .build(tauri::generate_context!()).unwrap();
