@@ -33,9 +33,17 @@ pub fn run() {
             let tray = TrayIconBuilder::new()
                 .icon(icon)
                 .menu(&menu)
-                .on_tray_icon_event(|tray_handle, event| {
-                    tauri_plugin_positioner::on_tray_event(tray_handle.app_handle(), &event);
-                  })
+                .on_tray_icon_event(|tray_handle, event| match event {
+                    tauri::tray::TrayIconEvent::Click { id, position, rect, button, button_state } => {
+                        let window = tray_handle.app_handle().get_webview_window("main").unwrap();
+                        let _ = window.move_window(Position::TrayCenter);
+                        window.show().unwrap();
+                        window.set_focus().unwrap();
+                    }
+                    _ => {
+                        tauri_plugin_positioner::on_tray_event(tray_handle.app_handle(), &event)
+                    }
+                })
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open" => {
