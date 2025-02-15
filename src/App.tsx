@@ -1,8 +1,5 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import tauriLogo from "./assets/tauri.svg";
-import viteLogo from "./assets/vite.svg";
-import screenpipeLogo from "./assets/screenpipe.png";
+import logo from "./assets/logo.png";
 import { invoke } from "@tauri-apps/api/core";
 import { useVision } from "../hooks/useVision";
 import "./App.css";
@@ -19,7 +16,7 @@ function App() {
 
 	return (
 		<main className="container">
-			<h1>Welcome to Screenpipe + Tauri</h1>
+			<h1>Joey</h1>
 
 			<div>
 				<p>First 50 characters detected on screen:</p>
@@ -29,32 +26,14 @@ function App() {
 			<div className="row">
 				<a href="https://screenpi.pe/" target="_blank">
 					<img
-						src={screenpipeLogo}
-						className="logo screenpipe"
-						alt="React logo"
-					/>
-				</a>
-				<a href="https://tauri.app" target="_blank">
-					<img
-						src={tauriLogo}
-						className="logo tauri"
-						alt="Tauri logo"
-					/>
-				</a>
-				<a href="https://vitejs.dev" target="_blank">
-					<img src={viteLogo} className="logo vite" alt="Vite logo" />
-				</a>
-				<a href="https://reactjs.org" target="_blank">
-					<img
-						src={reactLogo}
-						className="logo react"
-						alt="Screenpipe logo"
+						src={logo}
+						className="logo"
+						alt="Logo"
 					/>
 				</a>
 			</div>
 			<p>
-				Click on the Screenpipe, Tauri, Vite, and React logos to learn
-				more.
+				Click Joey to stop the screen recording.
 			</p>
 
 			<form
