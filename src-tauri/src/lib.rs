@@ -1,8 +1,6 @@
 use tauri_plugin_shell::{ShellExt, process::CommandChild};
 use tauri::{
-    menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
-    RunEvent,
+    menu::{Menu, MenuItem}, tray::TrayIconBuilder, Manager, RunEvent
 };
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -21,15 +19,32 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet])
         .setup(|app| {
+            let open_i = MenuItem::with_id(app, "open", "Open App", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&quit_i])?;
+            let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
+            
+            // Load the icon
+            let icon = app.default_window_icon()
+                .expect("failed to get default icon")
+                .clone();
+
             let tray = TrayIconBuilder::new()
+                .icon(icon)
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
+                    "open" => {
+                        println!("open menu item was clicked");
+                        let window =app.get_webview_window("main").unwrap();
+                        if window.is_visible().unwrap() {
+                            window.hide().unwrap();
+                        } else {
+                            window.show().unwrap();
+                        }
+                    }
                     "quit" => {
-                      println!("quit menu item was clicked");
-                      app.exit(0);
+                        println!("quit menu item was clicked");
+                        app.exit(0);
                     }
                     _ => {
                         println!("menu item {:?} not handled", event.id);
