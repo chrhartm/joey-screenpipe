@@ -1,6 +1,8 @@
 use tauri_plugin_shell::{ShellExt, process::CommandChild};
 use tauri::{
-    menu::{Menu, MenuItem}, tray::TrayIconBuilder, Manager, RunEvent
+    menu::{Menu, MenuItem},
+    tray::{TrayIconBuilder, TrayIconEvent, MouseButtonState},
+    Manager, RunEvent
 };
 use tauri_plugin_positioner::{Position, WindowExt};
 
@@ -20,9 +22,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet])
         .setup(|app| {
-            let open_i = MenuItem::with_id(app, "open", "Open App", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open_i, &quit_i])?;
+            let menu = Menu::with_items(app, &[&quit_i])?;
             
             // Load the icon
             let icon = app.default_window_icon()
@@ -34,7 +35,10 @@ pub fn run() {
                 .icon(icon)
                 .menu(&menu)
                 .on_tray_icon_event(|tray_handle, event| match event {
-                    tauri::tray::TrayIconEvent::Click { .. } => {
+                    tauri::tray::TrayIconEvent::Click { button_state, button, .. }
+                        if button_state == tauri::tray::MouseButtonState::Down 
+                            && button == tauri::tray::MouseButton::Left =>
+                    {
                         let window = tray_handle.app_handle().get_webview_window("main").unwrap();
                         if window.is_visible().unwrap() {
                             window.hide().unwrap();
@@ -50,16 +54,6 @@ pub fn run() {
                 })
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
-                    "open" => {
-                        println!("open menu item was clicked");
-                        let window =app.get_webview_window("main").unwrap();
-                        let _ = window.move_window(Position::TrayCenter);
-                        if window.is_visible().unwrap() {
-                            window.hide().unwrap();
-                        } else {
-                            window.show().unwrap();
-                        }
-                    }
                     "quit" => {
                         println!("quit menu item was clicked");
                         app.exit(0);
