@@ -1,28 +1,18 @@
-import { useState } from "react";
 import logo from "./assets/logo.png";
-import { invoke } from "@tauri-apps/api/core";
-import { useVision } from "../hooks/useVision";
+import { useLastMinutes } from "../hooks/screenpipe";
 import "./App.css";
 
 function App() {
-	const [greetMsg, setGreetMsg] = useState("");
-	const [name, setName] = useState("");
-	const { text } = useVision();
-
-	async function greet() {
-		// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-		setGreetMsg(await invoke("greet", { name }));
-	}
-
+	const frames = useLastMinutes(50);
+	
+	// Filter raw JSON assuming each frame contains a "data" array
+	// and the first element has a "type" field.
+	const OCR = (frames || []).filter(
+		(frame: any) => frame.data && frame.data[0] && frame.data[0].type === "OCR"
+	);
+	
 	return (
 		<main className="container">
-			<h1>Joey</h1>
-
-			<div>
-				<p>First 50 characters detected on screen:</p>
-				<p>{text.substring(0, 50)}</p>
-			</div>
-
 			<div className="row">
 				<a href="https://screenpi.pe/" target="_blank">
 					<img
@@ -32,25 +22,21 @@ function App() {
 					/>
 				</a>
 			</div>
-			<p>
-				Click Joey to stop the screen recording.
-			</p>
 
-			<form
-				className="row"
-				onSubmit={(e) => {
-					e.preventDefault();
-					greet();
-				}}
-			>
-				<input
-					id="greet-input"
-					onChange={(e) => setName(e.currentTarget.value)}
-					placeholder="Enter a name..."
-				/>
-				<button type="submit">Greet</button>
-			</form>
-			<p>{greetMsg}</p>
+			<div>
+				<h3>OCR Frames</h3>
+				{OCR.length > 0 ? (
+					OCR.map((frame: any, index: number) => (
+						<div key={index}>
+							<p>{frame.data[0].content.text}</p>
+						</div>
+					))
+				) : (
+					<p>No OCR frames available</p>
+				)}
+				<h3>All Frames (raw):</h3>
+				<pre>{JSON.stringify(frames, null, 2)}</pre>
+			</div>
 		</main>
 	);
 }

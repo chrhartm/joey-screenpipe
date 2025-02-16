@@ -21,7 +21,7 @@ body {
 
 .container {
   margin: 0;
-  background-color: #606060;
+  background-color: #f6f6f6;
   padding-top: 10vh;
   display: flex;
   flex-direction: column;
@@ -105,7 +105,7 @@ button {
   width: 0;
   border-width: 0 8px 12px 8px;
   border-style: solid;
-  border-color: transparent transparent #606060 transparent;
+  border-color: transparent transparent #f6f6f6 transparent;
   position: absolute;
   top: 0px;
   left: 50%;
